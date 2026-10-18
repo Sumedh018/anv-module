@@ -1,6 +1,6 @@
 /**
  * ShiroX / Sora - ANV Module
- * Search, details, episodes and stream detection updated
+ * Search, details, episodes and stream detection updated*1
  */
 
 const BASE_URL = 'https://anv.to/';
@@ -122,56 +122,57 @@ async function searchResults(keyword) {
     try {
         if (!keyword || !String(keyword).trim()) return '[]';
 
-        const query = String(keyword)
-            .replace(/\bseason\s*\d+\b/gi, '')
-            .replace(/\bpart\s*\d+\b/gi, '')
-            .replace(/\((?:dub|sub)\)/gi, '')
-            .trim() || String(keyword).trim();
+        const url =
+            'https://anv.to/browse?q=' +
+            encodeURIComponent(String(keyword).trim());
 
-        const searchURL =
-            BASE_URL + 'browse?q=' + encodeURIComponent(query);
+        const response = await soraFetch(url);
 
-        const html = await soraFetch(searchURL);
-
-        if (!html) {
-            console.log('[ANV] Search page returned no content');
+        if (!response) {
+            console.log('[ANV DEBUG] No response from server');
             return '[]';
         }
 
-        console.log('[ANV] Search response length:', html.length);
+        console.log('[ANV DEBUG] Length:', response.length);
+        console.log('[ANV DEBUG] Start:', response.slice(0, 350));
 
         const results = [];
-        const seen = new Set();
+        const regex =
+            /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
-        function addResult(href, title, image = '') {
-            const fullURL = absoluteURL(href, searchURL);
-            const name = cleanText(title);
+        let match;
 
-            if (!fullURL || !name) return;
+        while ((match = regex.exec(response)) !== null) {
+            const href = match[1];
+            const title = match[2]
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
 
-            let parsed;
-            try {
-                parsed = new URL(fullURL);
-            } catch (_) {
-                return;
-            }
+            if (!title || !href) continue;
 
             if (
-                parsed.hostname !== 'anv.to' &&
-                !parsed.hostname.endsWith('.anv.to')
-            ) return;
-
-            if (!/^\/(?:anime|watch)\//i.test(parsed.pathname)) return;
-            if (seen.has(fullURL)) return;
-
-            seen.add(fullURL);
-
-            results.push({
-                title: name,
-                image: absoluteURL(image, searchURL),
-                href: fullURL
-            });
+                /\/(?:anime|watch)\//i.test(href) &&
+                !results.some(item => item.href === href)
+            ) {
+                results.push({
+                    title,
+                    image: '',
+                    href: href.startsWith('http')
+                        ? href
+                        : 'https://anv.to' + href
+                });
+            }
         }
+
+        console.log('[ANV DEBUG] Links found:', results.length);
+
+        return JSON.stringify(results);
+    } catch (error) {
+        console.log('[ANV DEBUG] Error:', String(error));
+        return '[]';
+    }
+}
 
         // Parse anime cards from HTML.
         const linkRegex =
