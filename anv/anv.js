@@ -1,6 +1,6 @@
 /**
  * ShiroX / Sora - ANV Module
- * Search, details, episodes and stream detection updated*1
+ * Search, details, episodes and stream detection updated*2
  */
 
 const BASE_URL = 'https://anv.to/';
