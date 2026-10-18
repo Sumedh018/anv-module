@@ -1,0 +1,11 @@
+{
+  "name": "ANV",
+  "version": "1.0.0",
+  "type": "anime",
+  "language": "en",
+  "icon": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/fullmetal-alchemist-3840x2160-10398.png",
+  "scriptUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/anv.js",
+  "baseUrl": "https://anv.to",
+  "searchBaseUrl": "https://anv.to/search?q=%s",
+  "asyncJS": true
+}
