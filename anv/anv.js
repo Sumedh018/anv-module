@@ -20,7 +20,7 @@ async function searchResults(keyword) {
     try {
         if (!keyword) return JSON.stringify([]);
         var encodedKeyword = encodeURIComponent(keyword.trim());
-        var responseText = await soraFetch('https://api.anv.to/search?q=' + encodedKeyword + '&language=dub');
+        var responseText = await soraFetch('https://api.anv.to/search?q=${encodedKeyword}&language=dub);
         if (!responseText) return JSON.stringify([]);
 
         var data = JSON.parse(responseText);
