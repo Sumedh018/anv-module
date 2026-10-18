@@ -1,11 +1,23 @@
 {
   "name": "ANV",
-  "version": "1.0.1",
-  "type": "anime",
-  "language": "en",
+  "sourceName": "ANV",
   "icon": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/fullmetal-alchemist-3840x2160-10398.png",
-  "scriptUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/anv.js",
+  "iconUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/fullmetal-alchemist-3840x2160-10398.png",
+  "author": {
+    "name": "SNN",
+    "icon": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/fullmetal-alchemist-3840x2160-10398.png",
+    "url": "https://github.com/Sumedh018/anv-module"
+  },
+  "version": "1.0.0",
+  "language": "en",
+  "streamType": "HLS",
+  "quality": "1080p",
   "baseUrl": "https://anv.to",
-  "searchBaseUrl": "https://anv.to/search?q=%s",
-  "asyncJS": true
+  "searchBaseUrl": "https://anv.to/search=%s",
+  "scriptUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/anv.js",
+  "type": "anime",
+  "downloadSupport": false,
+  "asyncJS": true,
+  "streamAsyncJS": false,
+  "softsub": true
 }
