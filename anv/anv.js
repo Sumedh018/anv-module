@@ -1,133 +1,127 @@
-/** Sora Module Template
- * This template is designed to help you create a module for Sora.
- * It includes functions for searching, extracting details, episodes, and stream URLs.
- * You can modify these functions to suit your needs.
- * 
- * For more information, visit the Sora documentation at https://sora.jm26.net/docs
- */
-
-
-/** searchResults
- * Searches for anime/shows/movies based on a keyword.
- * @param {string} keyword - The search keyword.
- * @returns {Promise<string>} - A JSON string of search results.
- */
-async function searchResults(keyword) {
+async function soraFetch(url, options) {
+    var opts = options || { headers: {}, method: 'GET', body: null };
     try {
-        const encodedKeyword = encodeURIComponent(keyword);
-        const responseText = await soraFetch(`https://api.anv.to/search?q=${encodedKeyword}&language=dub`);
-        const data = JSON.parse(responseText);
-
-        const filteredAnimes = data.data.animes.filter(anime => anime.episodes.dub !== null); 
-        
-        const transformedResults = data.data.animes.map(anime => ({
-            title: anime.name,
-            image: anime.poster,
-            href: `https://anv.to/watch/${anime.id}`
-        }));
-        
-        return JSON.stringify(transformedResults);
-        
-    } catch (error) {
-        console.log('Fetch error:', error);
-        return JSON.stringify([{ title: 'Error', image: '', href: '' }]);
-    }
-}
-
-/** extractDetails
- * Extracts details of an anime from its page URL.
- * @param {string} url - The URL of the anime page.
- * @returns {Promise<string>} - A JSON string of the anime details.
- */
-async function extractDetails(url) {
-    try {
-        const match = url.match(/https:\/\/anv\.to\/watch\/(.+)$/);
-        const encodedID = match[1];
-        const response = await soraFetch(`https://api.anv.to/anime/${encodedID}`);
-        const data = JSON.parse(response);
-        
-        const animeInfo = data.data.anime.info;
-        const moreInfo = data.data.anime.moreInfo;
-
-        const transformedResults = [{
-            description: animeInfo.description || 'No description available',
-            aliases: `Duration: ${animeInfo.stats?.duration || 'Unknown'}`,
-            airdate: `Aired: ${moreInfo?.aired || 'Unknown'}`
-        }];
-        
-        return JSON.stringify(transformedResults);
-    } catch (error) {
-        console.log('Details error:', error);
-        return JSON.stringify([{
-        description: 'Error loading description',
-        aliases: 'Duration: Unknown',
-        airdate: 'Aired: Unknown'
-        }]);
-  }
-}
-
-/** extractEpisodes
- * Extracts episodes of an anime from its page URL.
- * @param {string} url - The URL of the anime page.
- * @returns {Promise<string>} - A JSON string of the anime episodes.
- */
-async function extractEpisodes(url) {
-    try {
-        const match = url.match(/https:\/\/anv\.to\/watch\/(.+)$/);
-        const encodedID = match[1];
-        const response = await soraFetch(`https://api.anv.to/anime/${encodedID}/episodes`);
-        const data = JSON.parse(response);
-
-        const transformedResults = data.data.episodes.map(episode => ({
-            href: `https://anv.to/watch/${encodedID}?ep=${episode.episodeId.split('?ep=')[1]}`,
-            number: episode.number
-        }));
-        
-        return JSON.stringify(transformedResults);
-        
-    } catch (error) {
-        console.log('Fetch error:', error);
-    }    
-}
-
-/** extractStreamUrl
- * Extracts the stream URL of an anime episode from its page URL.
- * @param {string} url - The URL of the anime episode page.
- * @returns {Promise<string|null>} - The stream URL or null if not found.
- */
-async function extractStreamUrl(url) {
-    try {
-       const match = url.match(/https:\/\/anv\.to\/watch\/(.+)$/);
-       const encodedID = match[1];
-       const response = await soraFetch(`https://api.anv.to/episode/sources?animeEpisodeId=${encodedID}&category=dub`);
-       const data = JSON.parse(response);
-       
-       const hlsSource = data.data.sources.find(source => source.type === 'hls');
-       
-       return hlsSource ? hlsSource.url : null;
-    } catch (error) {
-       console.log('Fetch error:', error);
-       return null;
-    }
-}
-
-
-/** Fetch function that tries to use a custom fetch implementation first,
- * and falls back to the native fetch if it fails.
- * @param {string} url - The URL to fetch.
- * @param {Object} options - The options for the fetch request.
- * @returns {Promise<Response|null>} - The response object or null if an error occurs.
- * @note This function is designed to provide Node.js compatibility
- */
-async function soraFetch(url, options = { headers: {}, method: 'GET', body: null }) {
-    try {
-        return await fetchv2(url, options.headers ?? {}, options.method ?? 'GET', options.body ?? null);
-    } catch(e) {
+        var res = await fetchv2(url, opts.headers || {}, opts.method || 'GET', opts.body || null);
+        return typeof res === 'string' ? res : JSON.stringify(res);
+    } catch (e) {
         try {
-            return await fetch(url, options);
-        } catch(error) {
-            await console.log('soraFetch error: ' + error.message);
+            var response = await fetch(url, opts);
+            if (!response.ok) {
+                return null;
+            }
+            return await response.text();
+        } catch (err) {
             return null;
         }
+    }
+}
+
+async function searchResults(keyword) {
+    try {
+        if (!keyword) return JSON.stringify([]);
+        var encodedKeyword = encodeURIComponent(keyword.trim());
+        var responseText = await soraFetch('https://api.anv.to/search?q=' + encodedKeyword + '&language=dub');
+        if (!responseText) return JSON.stringify([]);
+
+        var data = JSON.parse(responseText);
+        var animes = (data && data.data && data.data.animes) ? data.data.animes : [];
+
+        var results = animes.map(function(anime) {
+            return {
+                title: anime.name || 'Unknown',
+                image: anime.poster || '',
+                href: 'https://anv.to/watch/' + anime.id
+            };
+        });
+
+        return JSON.stringify(results);
+    } catch (error) {
+        return JSON.stringify([]);
+    }
+}
+
+async function extractDetails(url) {
+    try {
+        var match = url.match(/\/watch\/([^?&/]+)/);
+        if (!match) return JSON.stringify([]);
+        var animeId = match[1];
+
+        var responseText = await soraFetch('https://api.anv.to/anime/' + animeId);
+        if (!responseText) return JSON.stringify([]);
+
+        var data = JSON.parse(responseText);
+        var animeInfo = (data && data.data && data.data.anime && data.data.anime.info) ? data.data.anime.info : {};
+        var moreInfo = (data && data.data && data.data.anime && data.data.anime.moreInfo) ? data.data.anime.moreInfo : {};
+
+        return JSON.stringify([{
+            description: animeInfo.description || 'No description available',
+            aliases: 'Duration: ' + ((animeInfo.stats && animeInfo.stats.duration) ? animeInfo.stats.duration : 'Unknown'),
+            airdate: 'Aired: ' + (moreInfo.aired || 'Unknown')
+        }]);
+    } catch (error) {
+        return JSON.stringify([{
+            description: 'Could not load details.',
+            aliases: 'Duration: Unknown',
+            airdate: 'Aired: Unknown'
+        }]);
+    }
+}
+
+async function extractEpisodes(url) {
+    try {
+        var match = url.match(/\/watch\/([^?&/]+)/);
+        if (!match) return JSON.stringify([]);
+        var animeId = match[1];
+
+        var responseText = await soraFetch('https://api.anv.to/anime/' + animeId + '/episodes');
+        if (!responseText) return JSON.stringify([]);
+
+        var data = JSON.parse(responseText);
+        var episodes = (data && data.data && data.data.episodes) ? data.data.episodes : [];
+
+        var results = episodes.map(function(episode) {
+            var rawEpId = String(episode.episodeId || '');
+            var epParam = rawEpId.indexOf('?ep=') !== -1 ? rawEpId.split('?ep=')[1] : rawEpId;
+
+            return {
+                href: 'https://anv.to/watch/' + animeId + '?ep=' + epParam,
+                number: episode.number !== undefined ? episode.number : 1
+            };
+        });
+
+        return JSON.stringify(results);
+    } catch (error) {
+        return JSON.stringify([]);
+    }
+}
+
+async function extractStreamUrl(url) {
+    try {
+        var epMatch = url.match(/[?&]ep=([^&#]+)/);
+        var episodeId = epMatch ? epMatch[1] : null;
+
+        if (!episodeId) return null;
+
+        var responseText = await soraFetch('https://api.anv.to/episode/sources?animeEpisodeId=' + episodeId + '&category=dub');
+        if (!responseText) return null;
+
+        var data = JSON.parse(responseText);
+        var sources = (data && data.data && data.data.sources) ? data.data.sources : [];
+        var hlsSource = null;
+
+        for (var i = 0; i < sources.length; i++) {
+            if (sources[i].type === 'hls') {
+                hlsSource = sources[i];
+                break;
+            }
+        }
+
+        if (!hlsSource && sources.length > 0) {
+            hlsSource = sources[0];
+        }
+
+        return hlsSource ? hlsSource.url : null;
+    } catch (error) {
+        return null;
     }
 }
