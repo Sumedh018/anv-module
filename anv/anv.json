@@ -1,9 +1,9 @@
 {
     "sourceName": "ANV",
-    "iconUrl": "https://your-source.com/icon.png",
+    "iconUrl": "https://github.com/Sumedh018/anv-module/blob/main/anv/fullmetal-alchemist-3840x2160-10398.png
     "author": {
         "name": "SNN",
-        "icon": "https://your-source.com/author-icon.png",
+        "icon": "https://github.com/Sumedh018/anv-module/blob/main/anv/fullmetal-alchemist-3840x2160-10398.png",
         "url": "https://github.com/Sumedh018/anv-module/edit/main/anv/anv.json" // Optional: URL to the author's profile
     },
     "version": "1.0.0",
