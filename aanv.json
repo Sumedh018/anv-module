@@ -1,18 +1,18 @@
 {
-    "sourceName": "ANV DUB",
-    "iconUrl": "https://raw.githubusercontent.com/JayGxnzalez/Modules/refs/heads/main/Anikoto-DUB/icon.png",
+    "sourceName": "ANV",
+    "iconUrl": "https://anv.to/favicon.ico",
     "author": {
-        "name": "SNN",
-        "icon": "https://avatars.githubusercontent.com/JayGxnzalez?s=400",
-        "url": "https://github.com/Sumedh018"
+        "name": "Custom",
+        "icon": "",
+        "url": ""
     },
-    "version": "1.0.1",
+    "version": "1.0.0",
     "language": "English",
     "streamType": "HLS",
     "quality": "1080p",
     "baseUrl": "https://anv.to/",
-    "searchBaseUrl": "https://anv.to/filter?keyword=%s",
-    "scriptUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv.js",
+    "searchBaseUrl": "https://anv.to/search?keyword=%s",
+    "scriptUrl": "https://raw.githubusercontent.com/<username>/<repo>/main/anv.js",
     "type": "anime",
     "downloadSupport": true,
     "asyncJS": true,
