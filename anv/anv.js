@@ -119,26 +119,162 @@ function safeJSON(value) {
 /* -------------------- SEARCH -------------------- */
 
 
+
 async function searchResults(keyword) {
-    const url =
-        'https://anv.to/browse?q=' +
-        encodeURIComponent(String(keyword || 'Naruto').trim());
+    try {
+        if (!keyword || !String(keyword).trim()) {
+            return '[]';
+        }
 
-    const response = await soraFetch(url);
+        const query = String(keyword)
+            .replace(/\bseason\s*\d+\b/gi, '')
+            .replace(/\bpart\s*\d+\b/gi, '')
+            .replace(/\((?:dub|sub)\)/gi, '')
+            .trim() || String(keyword).trim();
 
-    if (!response) {
-        console.log('[ANV DEBUG] RESPONSE IS NULL');
+        const searchURL =
+            'https://anv.to/browse?q=' +
+            encodeURIComponent(query);
+
+        const html = await soraFetch(searchURL);
+
+        if (!html) {
+            console.log('[ANV] Search: no response');
+            return '[]';
+        }
+
+        console.log('[ANV] Response length:', html.length);
+
+        const results = [];
+        const seen = new Set();
+
+        function addResult(href, title, image) {
+            try {
+                const fullURL = new URL(href, searchURL);
+
+                if (
+                    fullURL.hostname !== 'anv.to' &&
+                    !fullURL.hostname.endsWith('.anv.to')
+                ) return;
+
+                if (!/^\/(?:anime|watch)\//i.test(fullURL.pathname)) {
+                    return;
+                }
+
+                title = cleanText(title);
+                if (!title || seen.has(fullURL.href)) return;
+
+                seen.add(fullURL.href);
+
+                results.push({
+                    title: title,
+                    image: absoluteURL(image || '', searchURL),
+                    href: fullURL.href
+                });
+            } catch (_) {}
+        }
+
+        // Parse HTML anime cards.
+        const linkRegex =
+            /<a\b([^>]*?)href\s*=\s*["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi;
+
+        let match;
+
+        while ((match = linkRegex.exec(html)) !== null) {
+            const attrs = match[1] + ' ' + match[3];
+            const href = decodeHTML(match[2]);
+            const content = match[4];
+
+            const titleMatch =
+                attrs.match(/\btitle=["']([^"']+)["']/i) ||
+                content.match(/\btitle=["']([^"']+)["']/i) ||
+                content.match(/\balt=["']([^"']+)["']/i);
+
+            const headingMatch = content.match(
+                /<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i
+            );
+
+            const imageMatch = content.match(
+                /<img\b[^>]*?\b(?:src|data-src|data-lazy-src)=["']([^"']+)["']/i
+            );
+
+            const title = titleMatch
+                ? titleMatch[1]
+                : headingMatch
+                    ? headingMatch[1]
+                    : '';
+
+            addResult(
+                href,
+                title,
+                imageMatch ? imageMatch[1] : ''
+            );
+        }
+
+        // Parse embedded Next.js data.
+        const nextMatch = html.match(
+            /<script\b[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i
+        );
+
+        if (nextMatch) {
+            try {
+                const data = JSON.parse(nextMatch[1]);
+
+                function walk(value, depth = 0) {
+                    if (
+                        !value ||
+                        typeof value !== 'object' ||
+                        depth > 15
+                    ) return;
+
+                    if (Array.isArray(value)) {
+                        value.forEach(item => walk(item, depth + 1));
+                        return;
+                    }
+
+                    const href =
+                        value.href || value.url ||
+                        value.path || value.link;
+
+                    const title =
+                        value.title || value.name ||
+                        value.englishTitle || value.romaji;
+
+                    const image =
+                        value.poster || value.posterUrl ||
+                        value.coverImage || value.thumbnail ||
+                        (typeof value.image === 'string'
+                            ? value.image
+                            : '');
+
+                    if (
+                        typeof href === 'string' &&
+                        typeof title === 'string'
+                    ) {
+                        addResult(href, title, image);
+                    }
+
+                    Object.values(value).forEach(
+                        item => walk(item, depth + 1)
+                    );
+                }
+
+                walk(data);
+            } catch (error) {
+                console.log('[ANV] Next.js data parsing failed');
+            }
+        }
+
+        console.log('[ANV] Results found:', results.length);
+
+        return JSON.stringify(results);
+    } catch (error) {
+        console.log(
+            '[ANV] Search error:',
+            error.message || error
+        );
         return '[]';
     }
-
-    console.log('[ANV DEBUG] LENGTH:', response.length);
-    console.log('[ANV DEBUG] FIRST 500 CHARS:', response.slice(0, 500));
-
-    const matches = response.match(/\/(?:anime|watch)\/[^"' ?]+/gi);
-
-    console.log('[ANV DEBUG] ANIME LINKS:', matches ? matches.length : 0);
-
-    return JSON.stringify([]);
 }
 
 /* -------------------- DETAILS -------------------- */
