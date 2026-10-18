@@ -305,21 +305,16 @@ async function extractFileId(embedUrl, referer) {
     return html.match(/data-id="([^"]*)"/)?.[1] || null;
 }
 
-// ---- AnvSite Class with Universal Search Matching ----------------------------
+// ---- AnvSite Class ---------------------------------------------------------
 class AnvSite {
     static async search(keyword) {
         const url = ANV_BASE + "/filter?keyword=" + encodeURIComponent(keyword);
-        console.log("[Anv] Fetching search: " + url);
         const resp = await soraFetch(url, { headers: { "User-Agent": UA, "Referer": ANV_BASE + "/" } });
         if (!resp || resp.status !== 200) return [];
         const html = await resp.text();
 
         const results = [];
-        // Match general card layout items or link anchors matching /watch/
-        const cardRegex = /<a[^>]+href="https?:\/\/[^"]*anv\.to\/watch\/([^"\/]+)[^"]*"[\s\S]*?>([\s\S]*?)<\/a>/g;
-        
-        // Alternative fallback block splitter to sweep all items reliably
-        const blocks = html.split(/<div class="item[^"]*"/);
+        const blocks = html.split('<div class="item');
         for (let i = 1; i < blocks.length; i++) {
             const block = blocks[i];
             const slugMatch = block.match(/\/watch\/([^"\/]+)/);
@@ -328,21 +323,14 @@ class AnvSite {
             const posterMatch = block.match(/src="([^"]+)"/) || block.match(/data-src="([^"]+)"/);
 
             if (!slugMatch) continue;
-            
             const slug = slugMatch[1];
-            // If showId isn't on data attributes, fallback to extracting any numerical identifier or slug hash
-            const showId = tipMatch ? tipMatch[1] : slug;
-
-            if (!results.some(r => r.slug === slug)) {
-                results.push({
-                    slug: slug,
-                    showId: showId,
-                    title: titleMatch ? titleMatch[1].trim() : slug.replace(/-/g, " "),
-                    poster: posterMatch ? posterMatch[1] : ""
-                });
-            }
+            results.push({
+                slug: slug,
+                showId: tipMatch ? tipMatch[1] : slug,
+                title: titleMatch ? titleMatch[1].trim() : slug.replace(/-/g, " "),
+                poster: posterMatch ? posterMatch[1] : ""
+            });
         }
-        console.log("[Anv] Search found items: " + results.length);
         return results;
     }
 
@@ -444,7 +432,7 @@ class AnvSite {
     }
 }
 
-// ---- Shirox Entry Points ----------------------------------------------------
+// ---- Shirox Entry Points (With Aliases for all variant names) ------------
 async function searchResults(keyword) {
     try {
         const items = await AnvSite.search(keyword);
@@ -454,10 +442,13 @@ async function searchResults(keyword) {
             href: "anime/" + item.slug + "?showId=" + item.showId
         })));
     } catch (e) {
-        console.log("[searchResults] Error: " + e);
         return JSON.stringify([]);
     }
 }
+
+// Aliasing other naming variants Shirox might look for
+async function searchResult(keyword) { return searchResults(keyword); }
+async function search(keyword) { return searchResults(keyword); }
 
 async function extractDetails(url) {
     try {
