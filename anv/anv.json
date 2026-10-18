@@ -12,7 +12,7 @@
     "quality": "1080p",
     "baseUrl": "https://anv.to/",
     "searchBaseUrl": "https://anv.to/search=%s",
-    "scriptUrl": "https://anv.to/script.js",
+    "scriptUrl": "https://github.com/Sumedh018/anv-module/blob/main/anv/anv.js",
     "type": "anime", // Required for the module library
     "downloadSupport": false, // Required for the module library
     "asyncJS": true,
