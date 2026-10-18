@@ -12,7 +12,7 @@
     "url": "https://github.com/Sumedh018/anv-module"
   },
   "baseUrl": "https://anv.to",
-  "searchBaseUrl": "https://anv.to/search?q=%s",
+  "searchBaseUrl": "https://anv.to/browse?q=%s",
   "scriptUrl": "https://raw.githubusercontent.com/Sumedh018/anv-module/main/anv/anv.js",
   "streamType": "HLS",
   "quality": "1080p",
