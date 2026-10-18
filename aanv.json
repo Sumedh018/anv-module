@@ -2,11 +2,11 @@
     "sourceName": "ANV DUB",
     "iconUrl": "https://raw.githubusercontent.com/JayGxnzalez/Modules/refs/heads/main/Anikoto-DUB/icon.png",
     "author": {
-        "name": "Jay",
+        "name": "Snn",
         "icon": "https://avatars.githubusercontent.com/JayGxnzalez?s=400",
-        "url": "https://github.com/JayGxnzalez"
+        "url": "https://github.com/Sumedh018"
     },
-    "version": "1.0.0",
+    "version": "1.0.1",
     "language": "English",
     "streamType": "HLS",
     "quality": "1080p",
