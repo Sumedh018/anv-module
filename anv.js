@@ -305,7 +305,7 @@ async function extractFileId(embedUrl, referer) {
     return html.match(/data-id="([^"]*)"/)?.[1] || null;
 }
 
-// ---- AnvSite Class ---------------------------------------------------------
+// ---- AnvSite Class with Flexible HTML Search Matching -----------------------
 class AnvSite {
     static async search(keyword) {
         const url = ANV_BASE + "/filter?keyword=" + encodeURIComponent(keyword);
@@ -314,16 +314,28 @@ class AnvSite {
         const html = await resp.text();
 
         const results = [];
-        const blocks = html.split('<div class="item');
-        for (let i = 1; i < blocks.length; i++) {
-            const block = blocks[i];
-            const slugMatch = block.match(/\/watch\/([^"\/]+)/);
-            const tipMatch = block.match(/data-tip="(\d+)"/) || block.match(/data-id="(\d+)"/);
-            const titleMatch = block.match(/class="name[^>]*>([^<]+)<\/a>/) || block.match(/class="title[^>]*>([^<]+)<\/a>/);
-            const posterMatch = block.match(/src="([^"]+)"/) || block.match(/data-src="([^"]+)"/);
+        // Extract any anchor linking to /watch/
+        const linkRegex = /href="([^"]*\/watch\/[^"\/]+(?:\/ep-\d+)?[^"]*)"/g;
+        let match;
+        const seenSlugs = {};
 
+        // Find all unique watch links on the page
+        while ((match = linkRegex.exec(html)) !== null) {
+            const fullLink = match[1];
+            const slugMatch = fullLink.match(/\/watch\/([^\/\?]+)/);
             if (!slugMatch) continue;
             const slug = slugMatch[1];
+            if (seenSlugs[slug]) continue;
+            seenSlugs[slug] = true;
+
+            // Try to find the surrounding context container block for this slug to get title/poster
+            const itemIndex = html.indexOf(slug);
+            const chunk = html.slice(Math.max(0, itemIndex - 400), Math.min(html.length, itemIndex + 800));
+
+            const tipMatch = chunk.match(/data-tip="(\d+)"/) || chunk.match(/data-id="(\d+)"/);
+            const titleMatch = chunk.match(/class="name[^>]*>([^<]+)<\/a>/) || chunk.match(/class="title[^>]*>([^<]+)<\/a>/) || chunk.match(/alt="([^"]+)"/);
+            const posterMatch = chunk.match(/src="([^"]+)"/) || chunk.match(/data-src="([^"]+)"/);
+
             results.push({
                 slug: slug,
                 showId: tipMatch ? tipMatch[1] : slug,
@@ -432,7 +444,7 @@ class AnvSite {
     }
 }
 
-// ---- Shirox Entry Points (With Aliases for all variant names) ------------
+// ---- Shirox Entry Points (With Aliases) -----------------------------------
 async function searchResults(keyword) {
     try {
         const items = await AnvSite.search(keyword);
@@ -446,7 +458,6 @@ async function searchResults(keyword) {
     }
 }
 
-// Aliasing other naming variants Shirox might look for
 async function searchResult(keyword) { return searchResults(keyword); }
 async function search(keyword) { return searchResults(keyword); }
 
