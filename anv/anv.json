@@ -1,20 +1,21 @@
 {
     "sourceName": "ANV",
-    "iconUrl": "https://anv.to/favicon.ico",
+    "iconUrl": "https://your-source.com/icon.png",
     "author": {
-        "name": "Custom",
-        "icon": "",
-        "url": ""
+        "name": "SNN",
+        "icon": "https://your-source.com/author-icon.png",
+        "url": "https://github.com/Sumedh018/anv-module/edit/main/anv/anv.json" // Optional: URL to the author's profile
     },
     "version": "1.0.0",
-    "language": "English",
+    "language": "English (DUB)",
     "streamType": "HLS",
     "quality": "1080p",
     "baseUrl": "https://anv.to/",
-    "searchBaseUrl": "https://anv.to/search?keyword=%s",
-    "scriptUrl": "https://raw.githubusercontent.com/<username>/<repo>/main/anv.js",
-    "type": "anime",
-    "downloadSupport": true,
+    "searchBaseUrl": "https://anv.to/search=%s",
+    "scriptUrl": "https://anv.to/script.js",
+    "type": "anime", // Required for the module library
+    "downloadSupport": false, // Required for the module library
     "asyncJS": true,
+    "streamAsyncJS": false,
     "softsub": true
 }
